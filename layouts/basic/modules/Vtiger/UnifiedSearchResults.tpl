@@ -16,12 +16,12 @@
 		{assign var=modulesCount value=count($searchRecords)}
 		{assign var="totalCount" value=$totalCount+$modulesCount}
 	{/foreach}
-	<div class="globalSearchResults modal fade">
+	<div class="tpl-Vtiger-UnifiedSearchResults globalSearchResults modal fade">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header padding1per">
 					<div class="row no-margin">
-						<span class="col-md-6"><strong>{\App\Language::translate('LBL_SEARCH_RESULTS',$MODULE)}&nbsp;({$totalCount})</strong></span>
+						<span><strong>{\App\Language::translate('LBL_SEARCH_RESULTS',$MODULE)}&nbsp;({$totalCount})</strong></span>
 						{if $IS_ADVANCE_SEARCH }
 							<span class="col-md-5">
 								<span class="float-right">
@@ -29,7 +29,7 @@
 								</span>
 							</span>
 						{/if}
-						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<button type="button" class="close float-right" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 					</div>
 				</div>
 				<div class="contents modal-body">
@@ -63,7 +63,7 @@
 											<a target="_blank" id="{$ID}_link" class="u-cursor-pointer" {if stripos($DETAILVIEW_URL, 'javascript:')===0} 
 											   onclick='{$DETAILVIEW_URL|substr:strlen("javascript:")}' {else} onclick='window.location.href = "{$DETAILVIEW_URL}"' {/if}>
 												<span>{$recordObject->getName()} {if $recordObject->get('smownerid')}({$recordObject->getDisplayValue('smownerid',$ID,true)}){/if}</span>
-												<span id="{$ID}_time" class="float-right">{\App\Fields\DateTime::formatToViewDate($recordObject->get('createdtime'))}</span>
+												<span id="{$ID}_time" class="float-right">&nbsp;{\App\Fields\DateTime::formatToViewDate($recordObject->get('createdtime'))}</span>
 											</a>
 										</li>
 									{else}
