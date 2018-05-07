@@ -1215,7 +1215,7 @@ jQuery.Class('Vtiger_Widget_Js', {
 			var url = recordsCountBtn.data('url');
 			AppConnector.request(url).then(function (response) {
 				recordsCountBtn.find('.count').html(response.result.totalCount);
-				recordsCountBtn.find('span:not(.count)').addClass('d-none');
+				recordsCountBtn.find('.showRecordCount').addClass('d-none');
 				recordsCountBtn.find('a').removeClass('d-none');
 			});
 		});
