@@ -17,9 +17,14 @@ class BaseAction
 	public $allowedHeaders = [];
 	/** @var \Api\Controller */
 	public $controller;
-
 	/** @var \App\Base */
 	public $session;
+	/**
+	 * Response data type.
+	 *
+	 * @var string
+	 */
+	public $responseType = 'data';
 
 	public function checkAction()
 	{
@@ -74,6 +79,12 @@ class BaseAction
 		if (empty($row)) {
 			throw new \Api\Core\Exception('Invalid token', 401);
 		}
+		if ((strtotime('now') > strtotime($row['created']) + (\App\Config::security('API_CREATE_LIFETIME_SESSION') * 60)) || (strtotime('now') > strtotime($row['changed']) + (\App\Config::security('API_UPDATE_LIFETIME_SESSION') * 60))) {
+			$db->createCommand()
+				->delete($sessionTable, ['id' => $this->controller->headers['x-token']])
+				->execute();
+			throw new \Api\Core\Exception('Token has expired', 401);
+		}
 		$this->session = new \App\Base();
 		$this->session->setData($row);
 		\App\User::setCurrentUserId($this->session->get('user_id'));
@@ -84,10 +95,7 @@ class BaseAction
 		$namespace = ucfirst($apiType);
 		\App\Privilege::setPermissionInterpreter("\\Api\\{$namespace}\\Privilege");
 		\App\PrivilegeQuery::setPermissionInterpreter("\\Api\\{$namespace}\\PrivilegeQuery");
-		\Vtiger_Field_Model::setDefaultUiTypeClassName('\\Api\\Core\\Modules\\Vtiger\\UiTypes\\Base');
-		$db->createCommand()
-			->update($sessionTable, ['changed' => date('Y-m-d H:i:s')], ['id' => $this->session->get('id')])
-			->execute();
+		$db->createCommand()->update($sessionTable, ['changed' => date('Y-m-d H:i:s')], ['id' => $this->session->get('id')])->execute();
 		return true;
 	}
 

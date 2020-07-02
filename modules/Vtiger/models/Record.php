@@ -296,7 +296,14 @@ class Vtiger_Record_Model extends \App\Base
 	 */
 	public function getDetailViewUrl()
 	{
-		return 'index.php?module=' . $this->getModuleName() . '&view=' . $this->getModule()->getDetailViewName() . '&record=' . $this->getId();
+		$menuUrl = '';
+		if (isset($_REQUEST['parent'])) {
+			$menuUrl .= '&parent=' . \App\Request::_getInteger('parent');
+		}
+		if (isset($_REQUEST['mid'])) {
+			$menuUrl .= '&mid=' . \App\Request::_getInteger('mid');
+		}
+		return "index.php?module={$this->getModuleName()}&view={$this->getModule()->getDetailViewName()}&record={$this->getId()}{$menuUrl}";
 	}
 
 	/**
@@ -306,7 +313,7 @@ class Vtiger_Record_Model extends \App\Base
 	 */
 	public function getFullDetailViewUrl()
 	{
-		return 'index.php?module=' . $this->getModuleName() . '&view=' . $this->getModule()->getDetailViewName() . '&record=' . $this->getId() . '&mode=showDetailViewByMode&requestMode=full';
+		return $this->getDetailViewUrl() . '&mode=showDetailViewByMode&requestMode=full';
 	}
 
 	/**
@@ -316,7 +323,14 @@ class Vtiger_Record_Model extends \App\Base
 	 */
 	public function getEditViewUrl()
 	{
-		return 'index.php?module=' . $this->getModuleName() . '&view=' . $this->getModule()->getEditViewName() . ($this->getId() ? '&record=' . $this->getId() : '');
+		$menuUrl = '';
+		if (isset($_REQUEST['parent'])) {
+			$menuUrl .= '&parent=' . \App\Request::_getInteger('parent');
+		}
+		if (isset($_REQUEST['mid'])) {
+			$menuUrl .= '&mid=' . \App\Request::_getInteger('mid');
+		}
+		return "index.php?module={$this->getModuleName()}&view={$this->getModule()->getEditViewName()}{$menuUrl}" . ($this->getId() ? '&record=' . $this->getId() : '');
 	}
 
 	/**
@@ -1623,7 +1637,7 @@ class Vtiger_Record_Model extends \App\Base
 	 */
 	public function getValueByField(string $fieldName)
 	{
-		if (!$this->has($fieldName)) {
+		if (!$this->has($fieldName) || '' === $this->get($fieldName)) {
 			$focus = $this->getEntity();
 			if (isset($focus->column_fields[$fieldName]) && '' !== $focus->column_fields[$fieldName]) {
 				$value = $focus->column_fields[$fieldName];

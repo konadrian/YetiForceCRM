@@ -311,15 +311,6 @@ Settings_Workflows_Edit_Js(
 				progressIndicatorElement.progressIndicator({ mode: 'hide' });
 			});
 		},
-		/**
-		 * Function to get ckEditorInstance
-		 */
-		getckEditorInstance: function () {
-			if (this.ckEditorInstance === false) {
-				this.ckEditorInstance = new App.Fields.Text.Editor();
-			}
-			return this.ckEditorInstance;
-		},
 		registerTaskStatusChangeEvent: function () {
 			var container = this.getContainer();
 			container.on('change', '.taskStatus', function (e) {
@@ -390,23 +381,9 @@ Settings_Workflows_Edit_Js(
 				inputElement.val(newValue);
 			});
 		},
-		registerFillMailContentEvent: function () {
-			$('#task-fieldnames,#task_timefields,#task-templates').on('change', function (e) {
-				var textarea = CKEDITOR.instances.content;
-				var value = $(e.currentTarget).val();
-				if (textarea != undefined) {
-					textarea.insertHtml(value);
-				} else if ($('textarea[name="content"]')) {
-					var textArea = $('textarea[name="content"]');
-					textArea.insertAtCaret(value);
-				}
-			});
-		},
 		registerVTEmailTaskEvents: function () {
 			var textAreaElement = $('#content');
-			var ckEditorInstance = this.getckEditorInstance();
-			ckEditorInstance.loadEditor(textAreaElement);
-			this.registerFillMailContentEvent();
+			new App.Fields.Text.Editor(textAreaElement);
 			this.registerFillTaskFromEmailFieldEvent();
 			this.registerCcAndBccEvents();
 		},

@@ -159,6 +159,7 @@ var App = (window.App = {
 					const moduleName = quickCreateForm.find('[name="module"]').val();
 					const editViewInstance = Vtiger_Edit_Js.getInstanceByModuleName(moduleName);
 					const moduleClassName = moduleName + '_QuickCreate_Js';
+					editViewInstance.setForm(quickCreateForm);
 					editViewInstance.registerBasicEvents(quickCreateForm);
 					if (typeof window[moduleClassName] !== 'undefined') {
 						new window[moduleClassName]().registerEvents(container);
@@ -168,7 +169,6 @@ var App = (window.App = {
 						params.callbackPostShown(quickCreateForm);
 					}
 					this.registerPostLoadEvents(quickCreateForm, params);
-					this.registerHelpInfo(quickCreateForm);
 				});
 			},
 			/**
@@ -259,14 +259,6 @@ var App = (window.App = {
 				});
 
 				this.registerTabEvents(form);
-			},
-			/**
-			 * Register help info
-			 *
-			 * @param   {object}  container jQuery
-			 */
-			registerHelpInfo(container = $('form[name="QuickCreate"]')) {
-				app.showPopoverElementView(container.find('.js-help-info'));
 			},
 			/**
 			 * Function to navigate from quick create to edit iew full form
@@ -446,7 +438,14 @@ var App = (window.App = {
 									'Detail' === viewName &&
 									app.getRecordId() === form.find('[name="record"]').val()
 								) {
-									if (params.removeFromUrl) {
+									if (data.result._isViewable == false) {
+										if (window !== window.parent) {
+											window.parent.location.href =
+												'index.php?module=' + moduleName + '&view=ListPreview';
+										} else {
+											window.location.href = 'index.php?module=' + moduleName + '&view=List';
+										}
+									} else if (params.removeFromUrl) {
 										let searchParams = new URLSearchParams(window.location.search);
 										searchParams.delete('step');
 										window.location.href = 'index.php?' + searchParams.toString();
@@ -1068,7 +1067,7 @@ var app = (window.app = {
 			cb(modalContainer);
 			App.Fields.Picklist.showSelect2ElementView(modalContainer.find('select.select2'));
 			App.Fields.Date.register(modalContainer);
-			new App.Fields.Text.Editor(modalContainer.find('.js-editor'), {
+			App.Fields.Text.Editor.register(modalContainer.find('.js-editor'), {
 				height: '5em',
 				toolbar: 'Min'
 			});
@@ -2130,9 +2129,6 @@ var app = (window.app = {
 						.focus();
 			}
 		});
-		self.sidebar.find('.js-submenu').on('shown.bs.collapse', (e) => {
-			$(e.target).find(':tabbable').first().focus();
-		});
 		$('.js-submenu-toggler').on('click', (e) => {
 			if (!$(e.currentTarget).hasClass('collapsed') && !$(e.target).closest('.toggler').length) {
 				window.location = $(e.currentTarget).attr('href');
@@ -2307,15 +2303,15 @@ var app = (window.app = {
 	 */
 	convertUrlToObject(url) {
 		let urlObject = {};
-		url
-			.split('index.php?')[1]
-			.split('&')
-			.forEach((el) => {
-				if (el.includes('=')) {
-					let values = el.split('=');
-					urlObject[values[0]] = values[1];
-				}
-			});
+		if (url.indexOf('index.php?') !== -1) {
+			url = url.split('index.php?')[1];
+		}
+		url.split('&').forEach((el) => {
+			if (el.includes('=')) {
+				let values = el.split('=');
+				urlObject[values[0]] = values[1];
+			}
+		});
 		return urlObject;
 	},
 	/**

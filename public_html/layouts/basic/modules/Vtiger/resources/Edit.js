@@ -74,14 +74,19 @@ $.Class(
 		},
 		setForm: function (element) {
 			this.formElement = element;
+			let module;
+			if ((module = $('input[name="module"]', element))) {
+				this.moduleName = module.val();
+			}
 			return this;
 		},
 		getRecordsListParams: function (container) {
-			let sourceModule = app.getModuleName();
+			let formElement = container.closest('form');
+			let sourceModule = $('input[name="module"]', formElement).val();
 			let popupReferenceModule = $('input[name="popupReferenceModule"]', container).val();
 			let sourceFieldElement = $('input[class="sourceField"]', container);
 			let sourceField = sourceFieldElement.attr('name');
-			let sourceRecordElement = $('input[name="record"]');
+			let sourceRecordElement = $('input[name="record"]', formElement);
 			let sourceRecordId = '';
 			if (sourceRecordElement.length > 0) {
 				sourceRecordId = sourceRecordElement.val();
@@ -91,7 +96,6 @@ $.Class(
 				isMultiple = true;
 			}
 			let filterFields = {};
-			let formElement = container.closest('form');
 			let mappingRelatedField = formElement.find('input[name="mappingRelatedField"]').val();
 			let mappingRelatedModule = mappingRelatedField ? JSON.parse(mappingRelatedField) : [];
 			if (
@@ -102,6 +106,18 @@ $.Class(
 					let mapFieldElement = formElement.find('[name="' + index + '"]');
 					if (mapFieldElement.length && mapFieldElement.val() != '') {
 						filterFields[index] = mapFieldElement.val();
+					}
+				});
+			}
+			let listFilterFieldsJson = formElement.find('input[name="listFilterFields"]').val();
+			let listFilterFields = listFilterFieldsJson ? JSON.parse(listFilterFieldsJson) : [];
+			if (listFilterFields) {
+				console.log(listFilterFields);
+				$.each(listFilterFields, function (index, value) {
+					console.log(value);
+					let mapFieldElement = formElement.find('[name="' + value + '"]');
+					if (mapFieldElement.length && mapFieldElement.val() != '') {
+						filterFields[value] = mapFieldElement.val();
 					}
 				});
 			}
@@ -297,15 +313,12 @@ $.Class(
 		},
 		searchModuleNames: function (params) {
 			let aDeferred = $.Deferred();
-
 			if (typeof params.module === 'undefined') {
-				params.module = app.getModuleName();
+				params.module = this.moduleName;
 			}
-
 			if (typeof params.action === 'undefined') {
 				params.action = 'BasicAjax';
 			}
-
 			AppConnector.request(params)
 				.done(function (data) {
 					aDeferred.resolve(data);
@@ -1055,27 +1068,21 @@ $.Class(
 		 */
 		registerEventForEditor: function () {
 			let form = this.getForm();
-			let thisInstance = this;
-			$.each(form.find('.js-editor'), function (key, data) {
-				thisInstance.loadEditorElement($(data));
+			$.each(form.find('.js-editor:not(.js-inventory-item-comment)'), (key, data) => {
+				this.loadEditorElement($(data));
 			});
 		},
 		loadEditorElement: function (noteContentElement) {
-			let customConfig = {};
-			if (noteContentElement.hasClass('js-editor--basic')) {
-				customConfig.toolbar = 'Min';
-			}
-			if (noteContentElement.data('height')) {
-				customConfig.height = noteContentElement.data('height');
-			}
-			new App.Fields.Text.Editor(noteContentElement, customConfig);
+			App.Fields.Text.Editor.register(noteContentElement);
 		},
-		registerHelpInfo: function () {
-			let form = this.getForm();
+		registerHelpInfo: function (form) {
+			if (!form) {
+				form = this.getForm();
+			}
 			app.showPopoverElementView(form.find('.js-help-info'));
 		},
 		registerBlockAnimationEvent: function () {
-			let thisInstance = this;
+			const self = this;
 			let detailContentsHolder = this.getForm();
 			detailContentsHolder.on('click', '.blockHeader', function (e) {
 				const target = $(e.target);
@@ -1093,14 +1100,13 @@ $.Class(
 				let closestBlock = currentTarget.closest('.js-toggle-panel');
 				let bodyContents = closestBlock.find('.blockContent');
 				let data = currentTarget.data();
-				let module = app.getModuleName();
 				let hideHandler = function () {
 					bodyContents.addClass('d-none');
-					app.cacheSet(module + '.' + blockId, 0);
+					app.cacheSet(self.moduleName + '.' + blockId, 0);
 				};
 				let showHandler = function () {
 					bodyContents.removeClass('d-none');
-					app.cacheSet(module + '.' + blockId, 1);
+					app.cacheSet(self.moduleName + '.' + blockId, 1);
 				};
 				if (data.mode == 'show') {
 					hideHandler();
@@ -1115,7 +1121,7 @@ $.Class(
 		},
 		registerBlockStatusCheckOnLoad: function () {
 			let blocks = this.getForm().find('.js-toggle-panel');
-			let module = app.getModuleName();
+			let module = this.moduleName;
 			blocks.each(function (index, block) {
 				let currentBlock = $(block);
 				let dynamicAttr = currentBlock.attr('data-dynamic');
@@ -1140,6 +1146,7 @@ $.Class(
 			});
 		},
 		registerAutoloadAddress: function () {
+			const self = this;
 			this.getForm()
 				.find('.js-search-address')
 				.each(function (index, item) {
@@ -1149,7 +1156,7 @@ $.Class(
 					input.autocomplete({
 						source: function (request, response) {
 							AppConnector.request({
-								module: app.getModuleName(),
+								module: self.moduleName,
 								action: 'Fields',
 								mode: 'findAddress',
 								type: search.find('.js-select-operator').val(),
@@ -1458,30 +1465,38 @@ $.Class(
 						(container) => {
 							let modalForm = container.find('form.js-record-collector__form');
 							let summary = container.find('.js-record-collector__summary');
+							modalForm.validationEngine(app.validationEngineOptions);
 							modalForm.on('submit', function (e) {
-								summary.html('');
-								summary.progressIndicator({});
-								e.preventDefault();
-								AppConnector.request(modalForm.serializeFormData()).done(function (data) {
-									summary.progressIndicator({ mode: 'hide' });
-									summary.html(data);
-								});
+								if (modalForm.validationEngine('validate')) {
+									summary.html('');
+									summary.progressIndicator({});
+									e.preventDefault();
+									AppConnector.request(modalForm.serializeFormData()).done(function (data) {
+										summary.progressIndicator({ mode: 'hide' });
+										summary.html(data);
+									});
+								}
 							});
 							let recordForm = self.getForm();
+							container.on('click', '.js-record-collector__select', function () {
+								container
+									.find(`.js-record-collector__column[data-column="${this.dataset.column}"] input`)
+									.prop('checked', true);
+							});
 							container.on('click', '.js-record-collector__fill_fields', function () {
-								let mappedField = container.find('.formFieldsToRecordMap').val();
-								mappedField = JSON.parse(mappedField);
-								Object.keys(mappedField).forEach(function (key) {
-									let input = container.find('[name="' + key + '"]');
-									input.each(function () {
-										if (this.checked) {
-											let cellWithValue = $(this)
-												.closest('.value' + key)
-												.find('.fieldValue')
-												.html();
-											recordForm.find('[name="' + mappedField[key] + '"]').setValue(cellWithValue);
+								let formData = container
+									.find('.js-record-collector__fill_form')
+									.serializeFormData();
+								console.log(formData);
+								$.each(formData, function (key, value) {
+									if (value !== '') {
+										let fieldElement = recordForm.find(`[name="${key}"]`);
+										if (fieldElement.length) {
+											fieldElement.setValue(value);
+										} else {
+											recordForm.append(`<input type="hidden" name="${key}" value="${value}" />`);
 										}
-									});
+									}
 								});
 								app.hideModalWindow(null, 'collectorModal');
 							});
@@ -1539,7 +1554,7 @@ $.Class(
 			this.registerRecordPreSaveEventEvent(container);
 			this.registerReferenceSelectionEvent(container);
 			this.registerMaskFields(container);
-			this.registerHelpInfo();
+			this.registerHelpInfo(container);
 			this.registerReferenceFields(container);
 			this.registerFocusFirstField(container);
 			this.registerCopyValue(container);

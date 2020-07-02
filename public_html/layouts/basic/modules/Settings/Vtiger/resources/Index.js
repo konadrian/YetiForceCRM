@@ -279,47 +279,7 @@ $.Class(
 			});
 		},
 		loadEditorElement: function () {
-			new App.Fields.Text.Editor($('.js-editor'), {});
-		},
-		registerSaveIssues: function () {
-			var container = $('.addIssuesModal');
-			container.validationEngine(app.validationEngineOptions);
-			var title = $('#titleIssues');
-			var CKEditorInstance = CKEDITOR.instances['bodyIssues'];
-			var thisInstance = this;
-			var saveBtn = container.find('.saveIssues');
-			saveBtn.on('click', function () {
-				if (container.validationEngine('validate')) {
-					var body = CKEditorInstance.document.getBody().getHtml();
-					var params = {
-						module: 'Github',
-						parent: app.getParentModuleName(),
-						action: 'SaveIssuesAjax',
-						title: title.val(),
-						body: body
-					};
-					AppConnector.request(params).done(function (data) {
-						app.hideModalWindow();
-						thisInstance.reloadContent();
-						if (data.result.success == true) {
-							var params = {
-								title: app.vtranslate('JS_LBL_PERMISSION'),
-								text: app.vtranslate('JS_ADDED_ISSUE_COMPLETE'),
-								type: 'success'
-							};
-							Vtiger_Helper_Js.showMessage(params);
-						}
-					});
-				}
-			});
-			$('[name="confirmRegulations"]').on('click', function () {
-				var currentTarget = $(this);
-				if (currentTarget.is(':checked')) {
-					saveBtn.removeAttr('disabled');
-				} else {
-					saveBtn.attr('disabled', 'disabled');
-				}
-			});
+			App.Fields.Text.Editor.register($('.js-editor'), {});
 		},
 		reloadContent: function () {
 			$('.js-tabs li .active').trigger('click');

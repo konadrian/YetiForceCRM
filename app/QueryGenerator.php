@@ -278,6 +278,18 @@ class QueryGenerator
 	}
 
 	/**
+	 * Clear fields.
+	 *
+	 * @return void
+	 */
+	public function clearFields()
+	{
+		$this->fields = ['id'];
+		$this->relatedFields = [];
+		return $this;
+	}
+
+	/**
 	 * Load base module list fields.
 	 */
 	public function loadListFields()
@@ -313,13 +325,12 @@ class QueryGenerator
 	/**
 	 * Set concat column.
 	 *
-	 * @param type  $columns
-	 * @param mixed $fieldName
-	 * @param mixed $concat
+	 * @param string $fieldName
+	 * @param string $concat
 	 *
 	 * @return \self
 	 */
-	public function setConcatColumn($fieldName, $concat)
+	public function setConcatColumn(string $fieldName, string $concat)
 	{
 		$this->concatColumn[$fieldName] = $concat;
 

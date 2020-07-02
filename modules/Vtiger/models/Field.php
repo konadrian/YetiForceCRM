@@ -32,13 +32,6 @@ class Vtiger_Field_Model extends vtlib\Field
 	 */
 	protected $uitypeModel;
 
-	/**
-	 * UI type class name.
-	 *
-	 * @var string
-	 */
-	protected static $defaultUiTypeClassName = 'Vtiger_Base_UIType';
-
 	public static $referenceTypes = ['reference', 'referenceLink', 'referenceProcess', 'referenceSubProcess', 'referenceExtend', 'referenceSubProcessSL'];
 
 	const REFERENCE_TYPE = 'reference';
@@ -571,19 +564,7 @@ class Vtiger_Field_Model extends vtlib\Field
 		if (isset($this->uitypeModel)) {
 			return $this->uitypeModel;
 		}
-		return $this->uitypeModel = (static::$defaultUiTypeClassName)::getInstanceFromField($this);
-	}
-
-	/**
-	 * Set loader UI types.
-	 *
-	 * @param string $defaultUiTypeClassName
-	 *
-	 * @return void
-	 */
-	public static function setDefaultUiTypeClassName(string $defaultUiTypeClassName)
-	{
-		static::$defaultUiTypeClassName = $defaultUiTypeClassName;
+		return $this->uitypeModel = Vtiger_Base_UIType::getInstanceFromField($this);
 	}
 
 	public function isRoleBased()
@@ -935,8 +916,12 @@ class Vtiger_Field_Model extends vtlib\Field
 	 */
 	public function getFieldInfo()
 	{
+		$this->fieldInfo['name'] = $this->get('name');
+		$this->fieldInfo['label'] = App\Language::translate($this->get('label'), $this->getModuleName());
 		$fieldDataType = $this->getFieldDataType();
+		$this->fieldInfo['type'] = $fieldDataType;
 		$this->fieldInfo['mandatory'] = $this->isMandatory();
+		$this->fieldInfo['defaultvalue'] = $this->getDefaultFieldValue();
 		$this->fieldInfo['presence'] = $this->isActiveField();
 		$this->fieldInfo['quickcreate'] = $this->isQuickCreateEnabled();
 		$this->fieldInfo['masseditable'] = $this->isMassEditable();
@@ -945,12 +930,7 @@ class Vtiger_Field_Model extends vtlib\Field
 		$this->fieldInfo['maximumlength'] = $this->get('maximumlength');
 		$this->fieldInfo['maxwidthcolumn'] = $this->get('maxwidthcolumn');
 		$this->fieldInfo['tabindex'] = $this->get('tabindex');
-		$this->fieldInfo['defaultvalue'] = $this->getDefaultFieldValue();
-		$this->fieldInfo['type'] = $fieldDataType;
 		$this->fieldInfo['fieldtype'] = explode('~', $this->get('typeofdata'))[0] ?? '';
-		$this->fieldInfo['name'] = $this->get('name');
-		$this->fieldInfo['label'] = App\Language::translate($this->get('label'), $this->getModuleName());
-
 		$currentUser = \App\User::getCurrentUserModel();
 		switch ($fieldDataType) {
 			case 'picklist':
@@ -964,6 +944,7 @@ class Vtiger_Field_Model extends vtlib\Field
 			case 'taxes':
 			case 'multiListFields':
 			case 'mailScannerFields':
+			case 'country':
 				$pickListValues = $this->getPicklistValues();
 				if (!empty($pickListValues)) {
 					$this->fieldInfo['picklistvalues'] = $pickListValues;

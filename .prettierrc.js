@@ -8,6 +8,12 @@ module.exports = {
 			options: {
 				singleQuote: false
 			}
+		},
+		{
+			files: '*.json',
+			options: {
+				useTabs: false,
+			}
 		}
 	],
 	printWidth: 100,

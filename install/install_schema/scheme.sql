@@ -186,10 +186,26 @@ CREATE TABLE `a_yf_record_converter` (
 /*Table structure for table `a_yf_relatedlists_inv_fields` */
 
 CREATE TABLE `a_yf_relatedlists_inv_fields` (
-  `relation_id` int(10) DEFAULT NULL,
+  `relation_id` smallint(5) unsigned NOT NULL,
   `fieldname` varchar(30) DEFAULT NULL,
   `sequence` tinyint(1) DEFAULT NULL,
-  KEY `relation_id` (`relation_id`)
+  KEY `relation_id` (`relation_id`),
+  CONSTRAINT `a_yf_relatedlists_inv_fields_ibfk_1` FOREIGN KEY (`relation_id`) REFERENCES `vtiger_relatedlists` (`relation_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Table structure for table `a_yf_relatedlists_widgets` */
+
+CREATE TABLE `a_yf_relatedlists_widgets` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `relation_id` smallint(5) unsigned NOT NULL,
+  `type` varchar(30) DEFAULT NULL,
+  `label` varchar(100) DEFAULT NULL,
+  `wcol` tinyint(1) DEFAULT 1,
+  `sequence` tinyint(2) DEFAULT NULL,
+  `data` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `relation_id` (`relation_id`),
+  CONSTRAINT `a_yf_relatedlists_widgets_ibfk_1` FOREIGN KEY (`relation_id`) REFERENCES `vtiger_relatedlists` (`relation_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `a_yf_smsnotifier_servers` */
@@ -1444,7 +1460,7 @@ CREATE TABLE `u_yf_chat_messages_crm` (
   `crmid` int(10) DEFAULT NULL,
   `userid` smallint(5) unsigned NOT NULL,
   `created` datetime DEFAULT NULL,
-  `messages` varchar(500) NOT NULL,
+  `messages` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `room_crmid` (`crmid`),
   CONSTRAINT `fk_chat_messages` FOREIGN KEY (`crmid`) REFERENCES `vtiger_crmentity` (`crmid`) ON DELETE CASCADE
@@ -1457,7 +1473,7 @@ CREATE TABLE `u_yf_chat_messages_global` (
   `globalid` int(10) unsigned NOT NULL,
   `userid` smallint(5) unsigned NOT NULL,
   `created` datetime DEFAULT NULL,
-  `messages` varchar(500) NOT NULL,
+  `messages` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `globalid` (`globalid`),
   CONSTRAINT `u_yf_chat_messages_global_ibfk_1` FOREIGN KEY (`globalid`) REFERENCES `u_yf_chat_global` (`global_room_id`) ON DELETE CASCADE
@@ -1470,7 +1486,7 @@ CREATE TABLE `u_yf_chat_messages_group` (
   `groupid` int(10) DEFAULT NULL,
   `userid` smallint(5) unsigned NOT NULL,
   `created` datetime DEFAULT NULL,
-  `messages` varchar(500) NOT NULL,
+  `messages` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `room_groupid` (`groupid`),
   CONSTRAINT `fk_chat_group_messages` FOREIGN KEY (`groupid`) REFERENCES `vtiger_groups` (`groupid`) ON DELETE CASCADE
@@ -1483,7 +1499,7 @@ CREATE TABLE `u_yf_chat_messages_private` (
   `privateid` int(10) unsigned NOT NULL,
   `userid` smallint(5) unsigned NOT NULL,
   `created` datetime DEFAULT NULL,
-  `messages` varchar(500) NOT NULL,
+  `messages` text NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -1494,7 +1510,7 @@ CREATE TABLE `u_yf_chat_messages_user` (
   `roomid` int(10) DEFAULT NULL,
   `userid` smallint(5) unsigned NOT NULL,
   `created` datetime DEFAULT NULL,
-  `messages` varchar(500) NOT NULL,
+  `messages` text NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -2404,15 +2420,6 @@ CREATE TABLE `u_yf_finvoiceproformacf` (
   PRIMARY KEY (`finvoiceproformaid`),
   CONSTRAINT `fk_1_vtiger_finvoiceproformacf` FOREIGN KEY (`finvoiceproformaid`) REFERENCES `u_yf_finvoiceproforma` (`finvoiceproformaid`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-/*Table structure for table `u_yf_github` */
-
-CREATE TABLE `u_yf_github` (
-  `github_id` int(10) NOT NULL AUTO_INCREMENT,
-  `token` varchar(500) DEFAULT NULL,
-  `username` varchar(32) DEFAULT NULL,
-  PRIMARY KEY (`github_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `u_yf_igdn` */
 
@@ -5226,14 +5233,15 @@ CREATE TABLE `vtiger_crmentityrel` (
 
 CREATE TABLE `vtiger_cron_task` (
   `id` int(10) NOT NULL AUTO_INCREMENT,
+  `status` tinyint(1) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
   `handler_class` varchar(100) DEFAULT NULL,
   `frequency` mediumint(10) DEFAULT NULL,
+  `max_exe_time` smallint(5) DEFAULT NULL,
   `laststart` int(10) unsigned DEFAULT NULL,
   `lastend` int(10) unsigned DEFAULT NULL,
-  `status` tinyint(1) DEFAULT NULL,
-  `module` varchar(25) DEFAULT NULL,
   `sequence` int(10) DEFAULT NULL,
+  `module` varchar(25) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `lase_error` text DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -5667,6 +5675,16 @@ CREATE TABLE `vtiger_default_record_view` (
   PRIMARY KEY (`default_record_viewid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
+/*Table structure for table `vtiger_default_search_operator` */
+
+CREATE TABLE `vtiger_default_search_operator` (
+  `default_search_operatorid` int(11) NOT NULL AUTO_INCREMENT,
+  `default_search_operator` varchar(255) DEFAULT NULL,
+  `presence` tinyint(1) DEFAULT 1,
+  `sortorderid` smallint(6) DEFAULT 0,
+  PRIMARY KEY (`default_search_operatorid`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+
 /*Table structure for table `vtiger_defaultactivitytype` */
 
 CREATE TABLE `vtiger_defaultactivitytype` (
@@ -5915,7 +5933,7 @@ CREATE TABLE `vtiger_field` (
   KEY `field_sequence_idx` (`sequence`),
   KEY `field_uitype_idx` (`uitype`),
   CONSTRAINT `fk_1_vtiger_field` FOREIGN KEY (`tabid`) REFERENCES `vtiger_tab` (`tabid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3040 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3041 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_fieldmodulerel` */
 
@@ -8058,17 +8076,18 @@ CREATE TABLE `vtiger_relatedlists` (
   KEY `related_tabid` (`related_tabid`),
   KEY `tabid_3` (`tabid`,`related_tabid`,`label`),
   KEY `tabid_4` (`tabid`,`related_tabid`,`presence`)
-) ENGINE=InnoDB AUTO_INCREMENT=636 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=637 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_relatedlists_fields` */
 
 CREATE TABLE `vtiger_relatedlists_fields` (
-  `relation_id` int(10) DEFAULT NULL,
+  `relation_id` smallint(5) unsigned NOT NULL,
   `fieldid` int(10) NOT NULL,
   `sequence` smallint(3) DEFAULT NULL,
   KEY `relation_id` (`relation_id`),
   KEY `fk_1_relatedlists_fields_fieldid` (`fieldid`),
-  CONSTRAINT `fk_1_relatedlists_fields_fieldid` FOREIGN KEY (`fieldid`) REFERENCES `vtiger_field` (`fieldid`) ON DELETE CASCADE
+  CONSTRAINT `fk_1_relatedlists_fields_fieldid` FOREIGN KEY (`fieldid`) REFERENCES `vtiger_field` (`fieldid`) ON DELETE CASCADE,
+  CONSTRAINT `vtiger_relatedlists_fields_ibfk_1` FOREIGN KEY (`relation_id`) REFERENCES `vtiger_relatedlists` (`relation_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_reminder_interval` */
@@ -8536,7 +8555,7 @@ CREATE TABLE `vtiger_ssingleorders_status` (
   `presence` tinyint(1) unsigned NOT NULL DEFAULT 1,
   `picklist_valueid` int(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (`ssingleorders_statusid`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_ssservicesstatus` */
 
@@ -9103,6 +9122,7 @@ CREATE TABLE `vtiger_users` (
   `mail_scanner_actions` text DEFAULT NULL,
   `mail_scanner_fields` text DEFAULT NULL,
   `secondary_email` varchar(100) DEFAULT '',
+  `default_search_operator` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email1` (`email1`),
   KEY `user_user_name_idx` (`user_name`),
@@ -9274,7 +9294,7 @@ CREATE TABLE `vtiger_widgets` (
   PRIMARY KEY (`id`),
   KEY `tabid` (`tabid`),
   CONSTRAINT `vtiger_widgets_ibfk_1` FOREIGN KEY (`tabid`) REFERENCES `vtiger_tab` (`tabid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=210 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=213 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_ws_entity` */
 

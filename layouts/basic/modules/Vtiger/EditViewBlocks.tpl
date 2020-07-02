@@ -21,6 +21,9 @@
 			{if !empty($MAPPING_RELATED_FIELD)}
 				<input type="hidden" name="mappingRelatedField" value='{\App\Purifier::encodeHtml($MAPPING_RELATED_FIELD)}'/>
 			{/if}
+			{if !empty($LIST_FILTER_FIELDS)}
+				<input type="hidden" name="listFilterFields" value='{\App\Purifier::encodeHtml($LIST_FILTER_FIELDS)}'/>
+			{/if}
 			{assign var=QUALIFIED_MODULE_NAME value={$QUALIFIED_MODULE}}
 			{assign var=IS_PARENT_EXISTS value=strpos($MODULE,":")}
 			{if $PARENT_MODULE neq ''}
@@ -48,7 +51,7 @@
 			{foreach from=$RECORD->getModule()->getFieldsByDisplayType(9) item=FIELD key=FIELD_NAME}
 				<input type="hidden" name="{$FIELD_NAME}" value="{$FIELD->getEditViewValue($RECORD->get($FIELD_NAME),$RECORD)}"/>
 			{/foreach}
-			{assign var="BREADCRUMBS_ACTIVE" value=App\Config::main('breadcrumbs')}
+			{assign var="BREADCRUMBS_ACTIVE" value=App\Config::layout('breadcrumbs')}
 			{if $BREADCRUMBS_ACTIVE}
 				<div class='o-breadcrumb widget_header row mb-3'>
 					<div class="col-md-8">
