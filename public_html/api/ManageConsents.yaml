@@ -321,10 +321,9 @@ components:
               type: integer
               example: 24842
             consents:
-              description: 'Get the edit value in display view'
-              type: object
-              additionalProperties:
-                description: 'Data from the associated module'
+              description: 'Gets consents.'
+              type: array
+              items:
                 type: integer
                 example: 24862
           type: object
