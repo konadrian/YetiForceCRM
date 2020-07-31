@@ -4321,6 +4321,14 @@ CREATE TABLE `u_yf_timeline` (
   CONSTRAINT `fk_1_u_yf_timeline` FOREIGN KEY (`crmid`) REFERENCES `vtiger_crmentity` (`crmid`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+/*Table structure for table `u_yf_users_labels` */
+
+CREATE TABLE `u_yf_users_labels` (
+  `id` int(10) unsigned NOT NULL,
+  `label` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 /*Table structure for table `u_yf_users_pinned` */
 
 CREATE TABLE `u_yf_users_pinned` (
@@ -6843,7 +6851,7 @@ CREATE TABLE `vtiger_modcomments` (
   KEY `parent_comments` (`parent_comments`),
   KEY `userid` (`userid`),
   KEY `related_to` (`related_to`,`parent_comments`),
-  CONSTRAINT `vtiger_modcomments_ibfk_1` FOREIGN KEY (`related_to`) REFERENCES `vtiger_crmentity` (`crmid`) ON DELETE CASCADE
+  CONSTRAINT `vtiger_modcomments_modcommentsid_fk` FOREIGN KEY (`modcommentsid`) REFERENCES `vtiger_crmentity` (`crmid`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_modcommentscf` */
