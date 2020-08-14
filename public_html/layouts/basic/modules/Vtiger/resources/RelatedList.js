@@ -147,7 +147,7 @@ jQuery.Class(
 				type: 'POST',
 				data: postData
 			}).done(function (responseData) {
-				if(responseData.result.notify){
+				if (responseData.result.notify) {
 					Vtiger_Helper_Js.showMessage(responseData.result.notify);
 				}
 				aDeferred.resolve(true);
@@ -1484,6 +1484,19 @@ jQuery.Class(
 				}
 			});
 		},
+		/**
+		 * Register change related view.
+		 */
+		registerChangeViewEvent() {
+			const self = this;
+			self.getRelatedContainer().on('click', '.js-change-related-view', function () {
+				self.relatedView = this.dataset.view;
+				self.loadRelatedList();
+			});
+		},
+		/**
+		 * Register related events
+		 */
 		registerRelatedEvents: function () {
 			this.registerUnreviewedCountEvent();
 			this.registerChangeEntityStateEvent();
@@ -1496,6 +1509,7 @@ jQuery.Class(
 			this.registerSelectAllClickEvent();
 			this.registerDeselectAllClickEvent();
 			this.registerQuickEditSaveEvent();
+			this.registerChangeViewEvent();
 			YetiForce_ListSearch_Js.registerSearch(this.content, (data) => {
 				this.loadRelatedList(data);
 			});
