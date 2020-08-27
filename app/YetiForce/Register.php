@@ -379,9 +379,12 @@ class Register
 	 *
 	 * @return string
 	 */
-	private static function getProvider(): string
+	public static function getProvider(): string
 	{
-		$env = getenv();
-		return $env['PROVIDER'] ?? '';
+		$path = \ROOT_DIRECTORY . '/app_data/installSource.txt';
+		if (\file_exists($path)) {
+			return trim(file_get_contents($path));
+		}
+		return getenv('PROVIDER') ?: getenv('provider') ?: '';
 	}
 }

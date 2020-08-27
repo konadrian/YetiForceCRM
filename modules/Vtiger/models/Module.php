@@ -106,7 +106,7 @@ class Vtiger_Module_Model extends \vtlib\Module
 		if (property_exists($this, $propertyName)) {
 			return $this->{$propertyName};
 		}
-		throw new \App\Exceptions\AppException($propertyName . ' doest not exists in class ' . \get_class($this));
+		throw new \App\Exceptions\AppException($propertyName . ' doest not exists in class ' . static::class);
 	}
 
 	/**
@@ -154,28 +154,15 @@ class Vtiger_Module_Model extends \vtlib\Module
 	 */
 	public function isCommentEnabled()
 	{
-		$enabled = false;
 		$moduleName = $this->getName();
-		$commentsModuleModel = self::getInstance('ModComments');
-		if ($commentsModuleModel && $commentsModuleModel->isActive()) {
-			if (\App\Cache::has('isModuleCommentEnabled', $moduleName)) {
-				return \App\Cache::get('isModuleCommentEnabled', $moduleName);
-			}
-			$query = new \App\Db\Query();
-			$fieldId = $query->select(['fieldid'])
-				->from('vtiger_field')
-				->where(['fieldname' => 'related_to', 'tabid' => $commentsModuleModel->getId()])
-				->scalar();
-			if (!empty($fieldId)) {
-				$enabled = $query->from('vtiger_fieldmodulerel')
-					->where(['fieldid' => $fieldId, 'relmodule' => $moduleName])
-					->exists();
-			}
-			\App\Cache::save('isModuleCommentEnabled', $moduleName, $enabled);
-		} else {
-			$enabled = false;
+		$cacheName = 'isModuleCommentEnabled';
+		if (!\App\Cache::has($cacheName, $moduleName)) {
+			$moduleModel = self::getInstance('ModComments');
+			$fieldModel = $moduleModel && $moduleModel->isActive() ? $moduleModel->getFieldByName('related_to') : null;
+			$enabled = $fieldModel && \in_array($moduleName, $fieldModel->getReferenceList());
+			\App\Cache::save($cacheName, $moduleName, $enabled, \App\Cache::LONG);
 		}
-		return $enabled;
+		return \App\Cache::get($cacheName, $moduleName);
 	}
 
 	/**
@@ -729,11 +716,11 @@ class Vtiger_Module_Model extends \vtlib\Module
 	 */
 	public function getNameFields()
 	{
-		$entityInfo = App\Module::getEntityInfo($this->getId());
+		$entityInfo = App\Module::getEntityInfo($this->getName());
 		$fieldsName = [];
 		if ($entityInfo) {
 			foreach ($entityInfo['fieldnameArr'] as $columnName) {
-				$fieldsName[] = $this->getFieldByColumn($columnName)->getFieldName();
+				$fieldsName[] = $this->getFieldByColumn($columnName)->getName();
 			}
 		}
 		return $fieldsName;
@@ -947,9 +934,9 @@ class Vtiger_Module_Model extends \vtlib\Module
 		$userPrivModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		$entityModules = self::getEntityModules();
 		$searchableModules = [];
-		foreach ($entityModules as $tabid => $moduleModel) {
+		foreach ($entityModules as $moduleModel) {
 			$moduleName = $moduleModel->getName();
-			$entityInfo = \App\Module::getEntityInfo($tabid);
+			$entityInfo = \App\Module::getEntityInfo($moduleName);
 			if ('Users' == $moduleName || !$entityInfo['turn_off']) {
 				continue;
 			}
@@ -993,25 +980,32 @@ class Vtiger_Module_Model extends \vtlib\Module
 	 */
 	public function getSideBarLinks($linkParams)
 	{
+		$menuUrl = '';
+		if (isset($_REQUEST['parent'])) {
+			$menuUrl .= '&parent=' . \App\Request::_getByType('parent', 'Alnum');
+		}
+		if (isset($_REQUEST['mid'])) {
+			$menuUrl .= '&mid=' . \App\Request::_getInteger('mid');
+		}
 		$links = Vtiger_Link_Model::getAllByType($this->getId(), ['SIDEBARLINK', 'SIDEBARWIDGET'], $linkParams);
 		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
 			'linktype' => 'SIDEBARLINK',
 			'linklabel' => 'LBL_RECORDS_LIST',
-			'linkurl' => $this->getListViewUrl(),
+			'linkurl' => $this->getListViewUrl() . $menuUrl,
 			'linkicon' => 'fas fa-list',
 		]);
 		$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
 			'linktype' => 'SIDEBARLINK',
 			'linklabel' => 'LBL_RECORDS_PREVIEW_LIST',
-			'linkurl' => 'index.php?module=' . $this->getName() . '&view=ListPreview',
+			'linkurl' => "index.php?module={$this->getName()}&view=ListPreview{$menuUrl}",
 			'linkicon' => 'far fa-list-alt',
 		]);
 		if ($userPrivilegesModel->hasModulePermission('Dashboard') && $userPrivilegesModel->hasModuleActionPermission($this->getId(), 'Dashboard')) {
 			$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
 				'linktype' => 'SIDEBARLINK',
 				'linklabel' => 'LBL_DASHBOARD',
-				'linkurl' => $this->getDashBoardUrl(),
+				'linkurl' => $this->getDashBoardUrl() . $menuUrl,
 				'linkicon' => 'fas fa-desktop',
 			]);
 		}
@@ -1020,7 +1014,7 @@ class Vtiger_Module_Model extends \vtlib\Module
 			$links['SIDEBARLINK'][] = Vtiger_Link_Model::getInstanceFromValues([
 				'linktype' => 'SIDEBARLINK',
 				'linklabel' => $treeViewModel->getName(),
-				'linkurl' => $treeViewModel->getTreeViewUrl(),
+				'linkurl' => $treeViewModel->getTreeViewUrl() . $menuUrl,
 				'linkicon' => 'fas fa-tree',
 			]);
 		}

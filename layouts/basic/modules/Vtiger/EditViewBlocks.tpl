@@ -21,6 +21,9 @@
 			{if !empty($MAPPING_RELATED_FIELD)}
 				<input type="hidden" name="mappingRelatedField" value='{\App\Purifier::encodeHtml($MAPPING_RELATED_FIELD)}'/>
 			{/if}
+			{if !empty($LIST_FILTER_FIELDS)}
+				<input type="hidden" name="listFilterFields" value='{\App\Purifier::encodeHtml($LIST_FILTER_FIELDS)}'/>
+			{/if}
 			{assign var=QUALIFIED_MODULE_NAME value={$QUALIFIED_MODULE}}
 			{assign var=IS_PARENT_EXISTS value=strpos($MODULE,":")}
 			{if $PARENT_MODULE neq ''}
@@ -48,7 +51,7 @@
 			{foreach from=$RECORD->getModule()->getFieldsByDisplayType(9) item=FIELD key=FIELD_NAME}
 				<input type="hidden" name="{$FIELD_NAME}" value="{$FIELD->getEditViewValue($RECORD->get($FIELD_NAME),$RECORD)}"/>
 			{/foreach}
-			{assign var="BREADCRUMBS_ACTIVE" value=App\Config::main('breadcrumbs')}
+			{assign var="BREADCRUMBS_ACTIVE" value=App\Config::layout('breadcrumbs')}
 			{if $BREADCRUMBS_ACTIVE}
 				<div class='o-breadcrumb widget_header row mb-3'>
 					<div class="col-md-8">
@@ -98,9 +101,10 @@
 						</div>
 						<div class="c-panel__body c-panel__body--edit blockContent js-block-content {if $IS_HIDDEN}d-none{/if}"
 							 data-js="display">
+							{assign var=PROVIDER value=\App\Map\Address::getActiveProviders()}
 							{if in_array($BLOCK_LABEL, $ADDRESS_BLOCK_LABELS)}
-								<div class="{if !$SEARCH_ADDRESS} {/if} adressAction row py-2 justify-content-center">
-									{include file=\App\Layout::getTemplatePath('BlockHeader.tpl', $MODULE)}
+								<div class="{if $SEARCH_ADDRESS && $PROVIDER && ($WIDTHTYPE eq 'narrow')} pb-1 {else} pb-2 {/if} pt-2 adressAction row justify-content-center">
+									{include file=\App\Layout::getTemplatePath('BlockHeader.tpl', $MODULE) PROVIDER=$PROVIDER}
 								</div>
 							{/if}
 							<div class="row">
@@ -130,7 +134,7 @@
 								{else} col-md-12 m-auto{/if} fieldRow row form-group align-items-center my-1">
 										{/if}
 											{assign var=HELPINFO_LABEL value=\App\Language::getTranslateHelpInfo($FIELD_MODEL, $VIEW)}
-										<label class="my-0 col-lg-12 col-xl-3 fieldLabel text-lg-left text-xl-right u-text-small-bold">
+										<label class="flCT_{$MODULE_NAME}_{$FIELD_MODEL->getFieldName()} my-0 col-lg-12 col-xl-3 fieldLabel text-lg-left text-xl-right u-text-small-bold">
 											{if $FIELD_MODEL->isMandatory() eq true}
 												<span class="redColor">*</span>
 											{/if}

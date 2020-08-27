@@ -31,6 +31,16 @@
 							</h5>
 						</div>
 						<div class="col-xl-6 col-12 text-center text-xl-right">
+							{if \App\Privilege::isPermitted($MODULE_NAME, 'RecordCollector') && !empty($QUICKCREATE_LINKS['EDIT_VIEW_RECORD_COLLECTOR'])}
+								{foreach item=COLLECTOR_LINK from=$QUICKCREATE_LINKS['EDIT_VIEW_RECORD_COLLECTOR']}
+									{assign var=COLLECTOR value=\App\RecordCollector::getInstance($COLLECTOR_LINK->get('linkurl'), $MODULE_NAME)}
+									{if isset($COLLECTOR) && $COLLECTOR->isActive()}
+										<button type="button" class="btn btn-outline-dark js-popover-tooltip js-record-collector-modal mr-1" {if isset(Vtiger_Field_Model::$tabIndexLastSeq)}tabindex="{Vtiger_Field_Model::$tabIndexLastSeq}"{/if} data-type={$COLLECTOR_LINK->get('linkurl')} data-content="{App\Language::translate({$COLLECTOR->label}, $MODULE_NAME)}" data-js="click|popover">
+											<span class="{$COLLECTOR->icon}"></span>
+										</button>
+									{/if}
+								{/foreach}
+							{/if}
 							{assign var="EDIT_VIEW_URL" value=$MODULE_MODEL->getCreateRecordUrl()}
 							{if !empty($QUICKCREATE_LINKS['QUICKCREATE_VIEW_HEADER'])}
 								{foreach item=LINK from=$QUICKCREATE_LINKS['QUICKCREATE_VIEW_HEADER']}
@@ -53,8 +63,10 @@
 							   value='{\App\Purifier::encodeHtml($PICKIST_DEPENDENCY_DATASOURCE)}'/>
 					{/if}
 					{if !empty($MAPPING_RELATED_FIELD)}
-						<input type="hidden" name="mappingRelatedField"
-							   value='{\App\Purifier::encodeHtml($MAPPING_RELATED_FIELD)}'/>
+						<input type="hidden" name="mappingRelatedField" value='{\App\Purifier::encodeHtml($MAPPING_RELATED_FIELD)}'/>
+					{/if}
+					{if !empty($LIST_FILTER_FIELDS)}
+						<input type="hidden" name="listFilterFields" value='{\App\Purifier::encodeHtml($LIST_FILTER_FIELDS)}'/>
 					{/if}
 					<input type="hidden" name="module" value="{$MODULE}"/>
 					<input type="hidden" name="action" value="SaveAjax"/>
@@ -91,7 +103,7 @@
 												{if $FIELD_MODEL->getUIType() neq "300"}col-sm-6
 												{else} col-md-12 m-auto{/if}  row form-group align-items-center my-1">
 													{assign var=HELPINFO_LABEL value=\App\Language::getTranslateHelpInfo($FIELD_MODEL, $VIEW)}
-													<label class="my-0 col-lg-12 col-xl-3 fieldLabel text-lg-left {if $FIELD_MODEL->getUIType() neq "300"} text-xl-right {/if} u-text-small-bold">
+													<label class="flCT_{$MODULE_NAME}_{$FIELD_MODEL->getFieldName()} my-0 col-lg-12 col-xl-3 fieldLabel text-lg-left {if $FIELD_MODEL->getUIType() neq "300"} text-xl-right {/if} u-text-small-bold">
 														{if $FIELD_MODEL->isMandatory() eq true}
 															<span class="redColor">*</span>
 														{/if}
@@ -162,7 +174,7 @@
 					</div>
 					{if !empty($SOURCE_RELATED_FIELD)}
 						{foreach key=FIELD_NAME item=FIELD_MODEL from=$SOURCE_RELATED_FIELD}
-							<div class="d-none">
+							<div class="d-none fieldValue">
 								{include file=\App\Layout::getTemplatePath($FIELD_MODEL->getUITypeModel()->getTemplateName(), $MODULE_NAME)}
 							</div>
 						{/foreach}

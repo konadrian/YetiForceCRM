@@ -53,6 +53,18 @@ class Validator
 	}
 
 	/**
+	 * Function verifies if given value contains only words, digits  or space.
+	 *
+	 * @param int|string $input
+	 *
+	 * @return bool
+	 */
+	public static function alnumSpace($input): bool
+	{
+		return preg_match('/^[[:alnum:]_ ]+$/', $input);
+	}
+
+	/**
 	 * Function verifies if given value is compatible with default data format.
 	 *
 	 * @param string $input
@@ -276,6 +288,24 @@ class Validator
 	public static function email(string $email): bool
 	{
 		return false !== filter_var($email, FILTER_VALIDATE_EMAIL) && $email === filter_var($email, FILTER_SANITIZE_EMAIL);
+	}
+
+	/**
+	 *  Function checks if given value is email.
+	 *
+	 * @param string|array $emails
+	 *
+	 * @return bool
+	 */
+	public static function emails($emails): bool
+	{
+		$emails = \is_string($emails) ? explode(',', $emails) : $emails;
+		foreach ($emails as $email) {
+			if ($email && !self::email($email)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

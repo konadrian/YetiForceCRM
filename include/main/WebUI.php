@@ -48,14 +48,13 @@ class Vtiger_WebUI extends Vtiger_EntryPoint
 	protected function checkLogin(App\Request $request)
 	{
 		if (!$this->hasLogin()) {
-			if (!$request->isAjax()) {
-				$request->set('module', 'Users');
-				$request->set('view', 'Login');
-				$this->process($request);
-				return true;
+			if ($request->isAjax()) {
+				throw new \App\Exceptions\Unauthorized('LBL_LOGIN_IS_REQUIRED', 401);
 			}
-			throw new \App\Exceptions\Unauthorized('LBL_LOGIN_IS_REQUIRED', 401);
+			header('location: index.php');
+			return true;
 		}
+		return false;
 	}
 
 	/**
@@ -152,11 +151,12 @@ class Vtiger_WebUI extends Vtiger_EntryPoint
 			\App\Process::$processName = $componentName;
 			\App\Process::$processType = $componentType;
 			\App\Config::setJsEnv('module', $moduleName);
+			\App\Config::setJsEnv('mode', $request->getMode());
 			if ($qualifiedModuleName && 0 === stripos($qualifiedModuleName, 'Settings') && empty(\App\User::getCurrentUserId())) {
 				header('location: ' . App\Config::main('site_URL'), true);
 			}
 			if ('AppComponents' === $moduleName) {
-				$handlerClass = "App\\Components\\{$componentName}";
+				$handlerClass = "App\\Controller\\Components\\{$componentType}\\{$componentName}";
 			} else {
 				$handlerClass = Vtiger_Loader::getComponentClassName($componentType, $componentName, $qualifiedModuleName);
 			}

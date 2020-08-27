@@ -458,34 +458,56 @@ window.App.Fields = {
 			});
 		},
 		Editor: class {
-			constructor(parentElement, params) {
-				let elements;
-				if (typeof parentElement === 'undefined') {
-					parentElement = $('body');
-				} else {
-					parentElement = $(parentElement);
+			constructor(container, params) {
+				this.container = container;
+				this.init(container, params);
+			}
+			/**
+			 * Register function
+			 * @param {jQuery} container
+			 * @param {Object} params
+			 */
+			static register(container, params) {
+				if (typeof container === 'undefined') {
+					container = $('body');
 				}
-				if (parentElement.hasClass('js-editor') && !parentElement.prop('disabled')) {
-					elements = parentElement;
-				} else {
-					elements = $('.js-editor:not([disabled])', parentElement);
+				if (container.hasClass('js-editor') && !container.prop('disabled')) {
+					return new App.Fields.Text.Editor(container, params);
 				}
-				if (elements.length !== 0 && typeof elements !== 'undefined') {
-					this.isModal = elements.closest('.js-modal-container').length;
-					if (this.isModal) {
-						let self = this;
-						this.progressInstance = $.progressIndicator({
-							blockInfo: {
-								enabled: true,
-								onBlock: () => {
-									self.loadEditor(elements, params);
-								}
+				const instances = [];
+				container.find('.js-editor:not([disabled])').each((_, e) => {
+					instances.push(new App.Fields.Text.Editor($(e), params));
+				});
+				return instances;
+			}
+			/**
+			 * Initiation
+			 * @param {jQuery} element
+			 * @param {Object} params
+			 */
+			init(element, params) {
+				let config = {};
+				if (element.hasClass('js-editor--basic')) {
+					config.toolbar = 'Min';
+				}
+				if (element.data('height')) {
+					config.height = element.data('height');
+				}
+				params = $.extend(config, params);
+				this.isModal = element.closest('.js-modal-container').length;
+				if (this.isModal) {
+					let self = this;
+					this.progressInstance = $.progressIndicator({
+						blockInfo: {
+							enabled: true,
+							onBlock: () => {
+								self.loadEditor(element, params);
 							}
-						});
-					} else {
-						App.Fields.Text.destroyEditor(elements);
-						this.loadEditor(elements, params);
-					}
+						}
+					});
+				} else {
+					App.Fields.Text.destroyEditor(element);
+					this.loadEditor(element, params);
 				}
 			}
 
@@ -1486,7 +1508,10 @@ window.App.Fields = {
 				let selectedOption = selectElement.data('selected-value');
 				if (selectedOption) {
 					let text = selectedOption;
-					if (selectElement.data('fieldinfo').picklistvalues.hasOwnProperty(selectedOption)) {
+					if (
+						selectElement.data('fieldinfo').picklistvalues.hasOwnProperty(selectedOption) &&
+						!selectElement.get(0).dataset.templateResult
+					) {
 						text = selectElement.data('fieldinfo').picklistvalues[selectedOption];
 					}
 					this.createSelectedOption(selectElement, text, selectedOption);
@@ -1502,7 +1527,11 @@ window.App.Fields = {
 		 */
 		registerLazySelectOptions(selectElement) {
 			let options = [];
-			if (selectElement.data('fieldinfo') && selectElement.data('fieldinfo').picklistvalues) {
+			if (
+				selectElement.data('fieldinfo') &&
+				selectElement.data('fieldinfo').picklistvalues &&
+				!selectElement.get(0).dataset.templateResult
+			) {
 				options = $.map(selectElement.data('fieldinfo').picklistvalues, function (val, key) {
 					return { id: key, text: val };
 				});
@@ -2006,39 +2035,138 @@ window.App.Fields = {
 			return parseFloat(value);
 		}
 	},
-	Tree: {
-		register(container) {
-			container.off('click', '.js-tree-modal');
-			container.on('click', '.js-tree-modal', function(e) {
-				let element = $(e.target),
-					parentElem = element.closest('.js-tree-container'),
-					sourceFieldElement = parentElem.find('input.sourceField'),
-					fieldDisplayElement = parentElem.find(
-						'input[name="' + sourceFieldElement.attr('name') + '_display"]'
-					);
-				AppConnector.request({
-					module: sourceFieldElement.data('modulename'),
-					view: 'TreeModal',
-					template: sourceFieldElement.data('treetemplate'),
-					fieldName: sourceFieldElement.attr('name'),
-					multiple: sourceFieldElement.data('multiple'),
-					value: sourceFieldElement.val()
-				}).done(function (requestData) {
-					app.modalEvents['treeModal'] = function (modal, instance) {
-						instance.setSelectEvent((responseData) => {
-							sourceFieldElement.val(responseData.id);
-							fieldDisplayElement.val(responseData.name).attr('readonly', true);
-							sourceFieldElement.trigger('change');
-						});
-					};
-					app.showModalWindow(requestData, { modalId: 'treeModal' });
-				});
-			});
-			if(typeof Vtiger_Edit_Js !== 'undefined'){
-				let vtigerEditInstance = new Vtiger_Edit_Js();
-				vtigerEditInstance.registerTreeAutoCompleteFields(container);
-				vtigerEditInstance.registerClearTreeSelectionEvent(container);
+	/**
+	 * Tree
+	 */
+	Tree: class Tree {
+		constructor(container) {
+			this.container = container;
+			this.init();
+		}
+		/**
+		 * Register function
+		 * @param {jQuery} container
+		 */
+		static register(container) {
+			if (container.hasClass('js-tree-container')) {
+				return new Tree(container);
 			}
+			const instances = [];
+			container.find('.js-tree-container').each((n, e) => {
+				instances.push(new Tree($(e)));
+			});
+			return instances;
+		}
+		/**
+		 * Initiation
+		 */
+		init() {
+			this.modalEvent();
+			this.autoCompleteEvent();
+			this.clearSelectionEvent();
+		}
+		/**
+		 * Function which will handle modal view with tree
+		 */
+		modalEvent() {
+			$('.js-tree-modal', this.container)
+				.off('click')
+				.on('click', (_) => {
+					let sourceFieldElement = this.container.find('input.sourceField'),
+						fieldDisplayElement = this.container.find(
+							'input[name="' + sourceFieldElement.attr('name') + '_display"]'
+						);
+					AppConnector.request({
+						module: sourceFieldElement.data('modulename'),
+						view: 'TreeModal',
+						template: sourceFieldElement.data('treetemplate'),
+						fieldName: sourceFieldElement.attr('name'),
+						multiple: sourceFieldElement.data('multiple'),
+						value: sourceFieldElement.val()
+					}).done(function (requestData) {
+						app.modalEvents['treeModal'] = function (modal, instance) {
+							instance.setSelectEvent((responseData) => {
+								sourceFieldElement.val(responseData.id);
+								fieldDisplayElement.val(responseData.name).attr('readonly', true);
+								sourceFieldElement.trigger('change');
+							});
+						};
+						app.showModalWindow(requestData, { modalId: 'treeModal' });
+					});
+				});
+		}
+		/**
+		 * Function which will handle the reference auto complete event registrations
+		 */
+		autoCompleteEvent() {
+			let autoCompleteElement = $('input.treeAutoComplete', this.container);
+			if (autoCompleteElement.hasClass('ui-autocomplete-input')) {
+				autoCompleteElement.autocomplete('destroy');
+			}
+			autoCompleteElement.autocomplete({
+				delay: '600',
+				minLength: '3',
+				source: function (request, response) {
+					let inputElement = $(this.element[0]);
+					let searchValue = request.term.toLowerCase();
+					let parentElem = inputElement.closest('.js-tree-container');
+					let sourceFieldElement = $('input.sourceField', parentElem);
+					let fieldInfo = sourceFieldElement.data('fieldinfo');
+					let allValues = fieldInfo.picklistvalues;
+					let responseDataList = [];
+					for (let id in allValues) {
+						if (allValues[id].toLowerCase().indexOf(searchValue) >= 0) {
+							responseDataList.push({ label: allValues[id], value: id, id: id });
+						}
+					}
+					if (responseDataList.length <= 0) {
+						$(inputElement).val('');
+						responseDataList.push({
+							label: app.vtranslate('JS_NO_RESULTS_FOUND'),
+							type: 'no results'
+						});
+					}
+					response(responseDataList);
+				},
+				select: function (event, ui) {
+					let selectedItemData = ui.item;
+					if (
+						typeof selectedItemData.type !== 'undefined' &&
+						selectedItemData.type == 'no results'
+					) {
+						return false;
+					}
+					selectedItemData.name = selectedItemData.value;
+					this.value = selectedItemData.label;
+					let element = $(this).attr('readonly', true);
+					element
+						.closest('.js-tree-container')
+						.find('input.sourceField')
+						.val(selectedItemData.id)
+						.trigger('change');
+					return false;
+				},
+				change: function (event, ui) {},
+				open: function (event, ui) {
+					//To Make the menu come up in the case of quick create
+					$(this).data('ui-autocomplete').menu.element.css('z-index', '100001');
+				}
+			});
+		}
+		/**
+		 * Function which will register reference field clear event
+		 */
+		clearSelectionEvent() {
+			$('.clearTreeSelection', this.container)
+				.off('click')
+				.on('click', (e) => {
+					let fieldElement = this.container.find('.sourceField');
+					$('input[name="' + fieldElement.attr('name') + '_display"]', this.container)
+						.removeAttr('readonly')
+						.val('');
+					fieldElement.val('').trigger('change');
+					e.preventDefault();
+				});
 		}
 	},
 	/**

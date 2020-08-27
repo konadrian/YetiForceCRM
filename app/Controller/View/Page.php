@@ -51,6 +51,9 @@ abstract class Page extends Base
 		$view->assign('REMINDER_ACTIVE', $activeReminder);
 		$view->assign('QUALIFIED_MODULE', $request->getModule(false));
 		$view->assign('MENUS', $this->getMenu());
+		if (!$request->isEmpty('mid')) {
+			$view->assign('MID', $request->getInteger('mid'));
+		}
 		$view->assign('BROWSING_HISTORY', \Vtiger_BrowsingHistory_Helper::getHistory());
 		$view->assign('HOME_MODULE_MODEL', \Vtiger_Module_Model::getInstance('Home'));
 		$view->assign('MENU_HEADER_LINKS', $this->getMenuHeaderLinks($request));
@@ -91,16 +94,18 @@ abstract class Page extends Base
 			'modules.Vtiger.resources.Menu',
 			'modules.Vtiger.resources.Header',
 			'modules.Vtiger.resources.Edit',
-			"modules.$moduleName.resources.Edit",
 			'~layouts/resources/Field.js',
 			'~layouts/resources/validator/BaseValidator.js',
 			'~layouts/resources/validator/FieldValidator.js',
 			'modules.Vtiger.resources.BasicSearch',
 			'modules.Vtiger.resources.ConditionBuilder',
 			'modules.Vtiger.resources.AdvanceFilter',
-			"modules.$moduleName.resources.AdvanceFilter",
 			'modules.Vtiger.resources.AdvanceSearch',
 		];
+		if ('AppComponents' !== $moduleName) {
+			$jsFileNames[] = "modules.$moduleName.resources.Edit";
+			$jsFileNames[] = "modules.$moduleName.resources.AdvanceFilter";
+		}
 		if (\App\Privilege::isPermitted('OSSMail')) {
 			$jsFileNames[] = '~layouts/basic/modules/OSSMail/resources/checkmails.js';
 		}

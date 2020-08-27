@@ -9,7 +9,7 @@
  */
 class Vtiger_Multifilter_Dashboard extends Vtiger_IndexAjax_View
 {
-	public function process(\App\Request $request, $widget = null)
+	public function process(App\Request $request, $widget = null)
 	{
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -61,5 +61,28 @@ class Vtiger_Multifilter_Dashboard extends Vtiger_IndexAjax_View
 			$viewer->assign('MODULE_NAME', $moduleName);
 			$viewer->view('dashboards/Multifilter.tpl', $moduleName);
 		}
+	}
+
+	/**
+	 * Set widget specific data.
+	 *
+	 * @param Vtiger_Widget_Model $widget
+	 * @param array               $data
+	 *
+	 * @return void
+	 */
+	public function setWidgetData(Vtiger_Widget_Model $widget, array $data)
+	{
+		$filters = array_keys(CustomView_Record_Model::getAll());
+		$widgetData = ['customMultiFilter' => []];
+		if ($widget->get('data') && 'null' !== $widget->get('data')) {
+			$widgetData = array_merge($widgetData, \App\Json::decode(App\Purifier::decodeHtml($widget->get('data'))));
+		}
+		foreach ($widgetData as $key => &$value) {
+			if (!empty($data[$key]) && !array_diff($data[$key], $filters)) {
+				$value = $data[$key];
+			}
+		}
+		$widget->set('data', \App\Json::encode($widgetData));
 	}
 }

@@ -71,8 +71,8 @@ class Colors
 				$colors[$item['id']] = $item['color'];
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/owners.css', $css);
-		file_put_contents(ROOT_DIRECTORY . '/app_data/owners_colors.php', '<?php return ' . Utils::varExport($colors) . ';');
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/owners.css', $css, LOCK_EX);
+		file_put_contents(ROOT_DIRECTORY . '/app_data/owners_colors.php', '<?php return ' . Utils::varExport($colors) . ';', LOCK_EX);
 	}
 
 	/**
@@ -88,7 +88,7 @@ class Colors
 				$css .= '.modCT_' . $item['module'] . ' { color: ' . $item['color'] . '; }' . PHP_EOL;
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/modules.css', $css);
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/modules.css', $css, LOCK_EX);
 	}
 
 	/**
@@ -120,7 +120,7 @@ class Colors
 				}
 			}
 		}
-		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/picklists.css', $css);
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/picklists.css', $css, LOCK_EX);
 	}
 
 	/**
@@ -380,5 +380,39 @@ class Colors
 			}
 		}
 		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/fields.css', $css);
+	}
+
+	/**
+	 * Update field color code and generate stylesheet file.
+	 *
+	 * @param int    $fieldId
+	 * @param string $color
+	 *
+	 * @return bool
+	 */
+	public static function updateFieldColor($fieldId, $color): bool
+	{
+		$result = Db::getInstance()->createCommand()->update('vtiger_field', ['color' => $color], ['fieldid' => $fieldId])->execute();
+		static::generate('field');
+		if (!$result) {
+			$result = $color === (new \App\Db\Query())->select(['color'])->from('vtiger_field')->where(['fieldid' => $fieldId])->scalar();
+		}
+		return $result;
+	}
+
+	/**
+	 * Generate fields colors stylesheet.
+	 */
+	public static function generateFields()
+	{
+		$css = '';
+		$query = (new \App\Db\Query())->select(['tabid', 'fieldname', 'color'])->from('vtiger_field')->where(['presence' => [0, 2]])->andWhere(['<>', 'color', '']);
+		$dataReader = $query->createCommand()->query();
+		while ($row = $dataReader->read()) {
+			if (ltrim($row['color'], '#')) {
+				$css .= '.flCT_' . Module::getModuleName($row['tabid']) . '_' . $row['fieldname'] . '{ color: ' . $row['color'] . '; }' . PHP_EOL;
+			}
+		}
+		file_put_contents(ROOT_DIRECTORY . '/public_html/layouts/resources/colors/fields.css', $css, LOCK_EX);
 	}
 }

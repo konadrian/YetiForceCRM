@@ -71,11 +71,14 @@ class Install_Index_View extends \App\Controller\View\Base
 			$lang = '';
 			if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
 				$languages = Install_Utils_Model::getLanguages();
-				array_walk($languages, function (&$shortCode, $code) {
-					$shortCode = Locale::getPrimaryLanguage($code);
-				});
+				foreach ($languages as $code => &$data) {
+					$data = Locale::getPrimaryLanguage($code);
+				}
 				foreach (explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']) as $code) {
-					if (isset($languages[$code]) || false !== ($code = array_search(Locale::acceptFromHttp($code), $languages))) {
+					if (isset($languages[$code]) ||
+						(($code = str_replace('_', '-', Locale::acceptFromHttp($code))) && isset($languages[$code])) ||
+						false !== ($code = array_search(Locale::acceptFromHttp($code), $languages))
+					) {
 						$lang = $code;
 						break;
 					}
@@ -164,7 +167,11 @@ class Install_Index_View extends \App\Controller\View\Base
 		}
 		$this->viewer->assign('LIBRARIES', \App\Installer\Credits::getCredits());
 		$this->viewer->assign('LICENSE', nl2br($license));
-		$this->viewer->display('StepLicense.tpl');
+		if ($request->getRaw('session_id') !== session_id()) {
+			$this->viewer->display('SessionError.tpl');
+		} else {
+			$this->viewer->display('StepLicense.tpl');
+		}
 	}
 
 	/**
