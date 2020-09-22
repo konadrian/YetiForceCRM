@@ -208,6 +208,28 @@ CREATE TABLE `a_yf_relatedlists_widgets` (
   CONSTRAINT `a_yf_relatedlists_widgets_ibfk_1` FOREIGN KEY (`relation_id`) REFERENCES `vtiger_relatedlists` (`relation_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+/*Table structure for table `a_yf_settings_access` */
+
+CREATE TABLE `a_yf_settings_access` (
+  `module_id` smallint(5) unsigned NOT NULL,
+  `user` int(10) NOT NULL,
+  UNIQUE KEY `a_yf_settings_access_module_id_user_idx` (`module_id`,`user`),
+  KEY `a_yf_settings_access_user_fk` (`user`),
+  CONSTRAINT `a_yf_settings_access_module_id_fk` FOREIGN KEY (`module_id`) REFERENCES `a_yf_settings_modules` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `a_yf_settings_access_user_fk` FOREIGN KEY (`user`) REFERENCES `vtiger_users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Table structure for table `a_yf_settings_modules` */
+
+CREATE TABLE `a_yf_settings_modules` (
+  `id` smallint(5) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `status` tinyint(1) NOT NULL,
+  `created_time` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `a_yf_settings_modules_name_status_idx` (`name`,`status`)
+) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8;
+
 /*Table structure for table `a_yf_smsnotifier_servers` */
 
 CREATE TABLE `a_yf_smsnotifier_servers` (
@@ -247,6 +269,7 @@ CREATE TABLE `b_yf_interests_conflict_conf` (
   `user_id` smallint(5) unsigned NOT NULL,
   `related_id` int(10) unsigned NOT NULL,
   `related_label` varchar(255) NOT NULL,
+  `source_id` int(10) NOT NULL DEFAULT 0,
   `modify_user_id` smallint(5) unsigned NOT NULL DEFAULT 0,
   `modify_date_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -739,6 +762,18 @@ CREATE TABLE `l_yf_userpass_history` (
   KEY `user_id` (`user_id`,`pass`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+/*Table structure for table `l_yf_users_login_purpose` */
+
+CREATE TABLE `l_yf_users_login_purpose` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `userid` int(10) NOT NULL,
+  `datetime` datetime NOT NULL,
+  `purpose` varchar(500) NOT NULL,
+  `baseid` int(10) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `l_yf_users_login_purpose_userid_idx` (`userid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 /*Table structure for table `o_yf_access_for_admin` */
 
 CREATE TABLE `o_yf_access_for_admin` (
@@ -815,7 +850,7 @@ CREATE TABLE `o_yf_csrf` (
 
 CREATE TABLE `roundcube_cache` (
   `user_id` int(10) unsigned NOT NULL,
-  `cache_key` varchar(128) CHARACTER SET ascii NOT NULL,
+  `cache_key` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `created` datetime NOT NULL DEFAULT '1000-01-01 00:00:00',
   `expires` datetime DEFAULT NULL,
   `data` longtext NOT NULL,
@@ -854,7 +889,7 @@ CREATE TABLE `roundcube_cache_messages` (
 /*Table structure for table `roundcube_cache_shared` */
 
 CREATE TABLE `roundcube_cache_shared` (
-  `cache_key` varchar(255) CHARACTER SET ascii NOT NULL,
+  `cache_key` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `created` datetime NOT NULL DEFAULT '1000-01-01 00:00:00',
   `expires` datetime DEFAULT NULL,
   `data` longtext NOT NULL,
@@ -925,6 +960,20 @@ CREATE TABLE `roundcube_dictionary` (
   `data` longtext NOT NULL,
   UNIQUE KEY `uniqueness` (`user_id`,`language`),
   CONSTRAINT `roundcube_user_id_fk_dictionary` FOREIGN KEY (`user_id`) REFERENCES `roundcube_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Table structure for table `roundcube_filestore` */
+
+CREATE TABLE `roundcube_filestore` (
+  `file_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` int(10) unsigned NOT NULL,
+  `context` varchar(32) NOT NULL,
+  `filename` varchar(128) NOT NULL,
+  `mtime` int(10) NOT NULL,
+  `data` longtext NOT NULL,
+  PRIMARY KEY (`file_id`),
+  UNIQUE KEY `uniqueness` (`user_id`,`context`,`filename`),
+  CONSTRAINT `user_id_fk_filestore` FOREIGN KEY (`user_id`) REFERENCES `roundcube_users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `roundcube_identities` */
@@ -1153,6 +1202,36 @@ CREATE TABLE `s_yf_mail_queue` (
   KEY `smtp_id` (`smtp_id`),
   KEY `status` (`status`),
   CONSTRAINT `s_yf_mail_queue_ibfk_1` FOREIGN KEY (`smtp_id`) REFERENCES `s_yf_mail_smtp` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Table structure for table `s_yf_mail_rbl_list` */
+
+CREATE TABLE `s_yf_mail_rbl_list` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `ip` varchar(40) NOT NULL,
+  `status` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `type` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `source` varchar(10) NOT NULL,
+  `from` varchar(100) DEFAULT NULL,
+  `by` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `type_ip` (`type`,`ip`),
+  KEY `status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+/*Table structure for table `s_yf_mail_rbl_request` */
+
+CREATE TABLE `s_yf_mail_rbl_request` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `status` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `datetime` datetime NOT NULL,
+  `type` tinyint(1) unsigned NOT NULL DEFAULT 0,
+  `user` int(10) unsigned NOT NULL,
+  `header` text NOT NULL,
+  `body` mediumtext DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `status` (`status`),
+  KEY `type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /*Table structure for table `s_yf_mail_relation_updater` */
@@ -5991,7 +6070,7 @@ CREATE TABLE `vtiger_field` (
   KEY `field_sequence_idx` (`sequence`),
   KEY `field_uitype_idx` (`uitype`),
   CONSTRAINT `fk_1_vtiger_field` FOREIGN KEY (`tabid`) REFERENCES `vtiger_tab` (`tabid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3041 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3042 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_fieldmodulerel` */
 
@@ -8458,7 +8537,7 @@ CREATE TABLE `vtiger_settings_field` (
   PRIMARY KEY (`fieldid`),
   KEY `fk_1_vtiger_settings_field` (`blockid`),
   CONSTRAINT `fk_1_vtiger_settings_field` FOREIGN KEY (`blockid`) REFERENCES `vtiger_settings_blocks` (`blockid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=128 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=130 DEFAULT CHARSET=utf8;
 
 /*Table structure for table `vtiger_sharedcalendar` */
 
@@ -9182,6 +9261,7 @@ CREATE TABLE `vtiger_users` (
   `mail_scanner_fields` text DEFAULT NULL,
   `secondary_email` varchar(100) DEFAULT '',
   `default_search_operator` varchar(255) DEFAULT NULL,
+  `super_user` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email1` (`email1`),
   KEY `user_user_name_idx` (`user_name`),

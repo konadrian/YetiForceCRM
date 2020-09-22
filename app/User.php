@@ -307,7 +307,17 @@ class User
 	 */
 	public function isAdmin()
 	{
-		return $this->privileges['details']['is_admin'];
+		return !empty($this->privileges['details']['is_admin']);
+	}
+
+	/**
+	 * Function to check whether the user is an super user.
+	 *
+	 * @return bool
+	 */
+	public function isSuperUser(): bool
+	{
+		return !empty($this->privileges['details']['super_user']);
 	}
 
 	/**

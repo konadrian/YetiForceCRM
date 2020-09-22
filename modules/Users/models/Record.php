@@ -312,6 +312,12 @@ class Users_Record_Model extends Vtiger_Record_Model
 				throw new \App\Exceptions\SaveRecord('ERR_PASSWORD_HAS_ALREADY_BEEN_USED', 406);
 			}
 		}
+		if (!$this->isNew() && 'on' === $this->getPreviousValue('is_admin')) {
+			$isExists = (new App\Db\Query())->from('vtiger_users')->where(['is_admin' => 'on'])->andWhere(['<>', 'id', $this->getId()])->exists();
+			if (!$isExists) {
+				throw new \App\Exceptions\SaveRecord('ERR_REMOVING_LAST_ADMIN', 406);
+			}
+		}
 	}
 
 	/**
@@ -903,7 +909,7 @@ class Users_Record_Model extends Vtiger_Record_Model
 	}
 
 	/**
-	 * Verify user assword.
+	 * Verify user password.
 	 *
 	 * @param string $password
 	 *
@@ -1044,7 +1050,6 @@ class Users_Record_Model extends Vtiger_Record_Model
 		}
 		return $favouriteUsers;
 	}
-
 
 	/**
 	 * Update record label.

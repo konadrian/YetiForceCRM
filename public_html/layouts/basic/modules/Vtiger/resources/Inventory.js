@@ -192,15 +192,16 @@ $.Class(
 				.find('.js-default-tax')
 				.data('tax-default-value');
 			let isGroupTax = thisInstance.isGroupTaxMode();
+			let summaryContainer = $('#blackIthemTable');
 			if (isGroupTax) {
-				if (app.getRecordId()) {
-					taxDefaultValue = thisInstance.getTaxPercent($('#blackIthemTable'));
-				}
-				if (taxDefaultValue) {
-					let taxParam = { aggregationType: 'global' };
+				let taxParam = thisInstance.getTaxParams(summaryContainer);
+				if (taxParam === false && taxDefaultValue) {
+					taxParam = { aggregationType: 'global' };
 					taxParam['globalTax'] = taxDefaultValue;
 					taxParam['individualTax'] = '';
-					thisInstance.setTaxParam($('#blackIthemTable'), taxParam);
+				}
+				if(taxParam){
+					thisInstance.setTaxParam(summaryContainer, taxParam);
 					thisInstance.setTaxParam(parentRow, taxParam);
 					parentRow.closest('.inventoryItems').data('taxParam', JSON.stringify(taxParam));
 					parentRow.find(thisInstance.rowClass).each(function () {
@@ -208,7 +209,7 @@ $.Class(
 					});
 				}
 			} else {
-				thisInstance.setTaxParam($('#blackIthemTable'), []);
+				thisInstance.setTaxParam(summaryContainer, []);
 				parentRow.closest('.inventoryItems').data('taxParam', '[]');
 			}
 		},
@@ -288,8 +289,12 @@ $.Class(
 			let taxParams = row.find('.taxParam').val();
 			if (taxParams == '' || taxParams == '[]' || taxParams == undefined) return 0;
 			taxParams = JSON.parse(taxParams);
-			let taxPercent = taxParams[taxParams.aggregationType + 'Tax'];
-			return taxPercent ? taxPercent : 0;
+			let taxPercent = 0;
+			let types = typeof taxParams.aggregationType === 'string' ? [taxParams.aggregationType] : taxParams.aggregationType;
+			types.forEach(function (aggregationType) {
+				taxPercent += taxParams[aggregationType + 'Tax'] || 0;
+			});
+			return taxPercent;
 		},
 		getTaxParams: function (row) {
 			let taxParams = row.find('.taxParam').val();
@@ -1869,10 +1874,12 @@ $.Class(
 		/**
 		 * Clear inventory data
 		 */
-		clearInventory: function (){
-			this.getInventoryItemsContainer().find('.inventoryRow').each(function () {
-				$(this).remove();
-			});
+		clearInventory: function () {
+			this.getInventoryItemsContainer()
+				.find('.inventoryRow')
+				.each(function () {
+					$(this).remove();
+				});
 		},
 		/**
 		 * Function which will register all the events

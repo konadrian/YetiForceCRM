@@ -7,6 +7,7 @@
  * @copyright YetiForce Sp. z o.o
  * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
  * @author    Mariusz Krzaczkowski <m.krzaczkowski@yetiforce.com>
+ * @author    Radosław Skrzypczak <r.skrzypczak@yetiforce.com>
  */
 
 namespace App\Controller\View;
@@ -162,6 +163,9 @@ abstract class Page extends Base
 		if (\App\Session::has('ShowUserPwnedPasswordChange')) {
 			\App\Config::setJsEnv('ShowUserPwnedPasswordChange', \App\Session::get('ShowUserPwnedPasswordChange'));
 		}
+		if (\App\Session::has('showVisitPurpose')) {
+			\App\Config::setJsEnv('showVisitPurpose', \App\Session::get('showVisitPurpose'));
+		}
 	}
 
 	/**
@@ -173,18 +177,18 @@ abstract class Page extends Base
 	 */
 	protected function getMenuHeaderLinks(\App\Request $request)
 	{
-		$userModel = \Users_Record_Model::getCurrentUserModel();
+		$userModel = \App\User::getCurrentUserModel();
 		$headerLinks = [];
-		if (\App\MeetingService::getInstance()->isActive() && \App\Privilege::isPermitted('Users', 'MeetingUrl', false, $userModel->getRealId())) {
+		if (\App\MeetingService::getInstance()->isActive() && \App\Privilege::isPermitted('Users', 'MeetingUrl', false, \App\User::getCurrentUserRealId())) {
 			$headerLinks[] = [
 				'linktype' => 'HEADERLINK',
 				'linklabel' => 'LBL_VIDEO_CONFERENCE',
-				'linkdata' => ['url' => 'index.php?module=Users&view=MeetingModal&record=' . $userModel->getRealId()],
+				'linkdata' => ['url' => 'index.php?module=Users&view=MeetingModal&record=' . \App\User::getCurrentUserRealId()],
 				'icon' => 'AdditionalIcon-VideoConference',
 				'linkclass' => 'js-show-modal'
 			];
 		}
-		if ($userModel->isAdminUser()) {
+		if ($userModel->isAdmin() || $userModel->isSuperUser()) {
 			if ('Settings' !== $request->getByType('parent', 2)) {
 				$headerLinks[] = [
 					'linktype' => 'HEADERLINK',

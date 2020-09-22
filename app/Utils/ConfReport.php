@@ -219,7 +219,7 @@ class ConfReport
 		'transaction_isolation' => ['container' => 'db', 'testCli' => false],
 		'ft_min_word_len' => ['container' => 'db', 'testCli' => false],
 		'innodb_ft_min_token_size' => ['container' => 'db', 'testCli' => false],
-		'innodb_default_row_format' => ['container' => 'db', 'testCli' => false],
+		'innodb_default_row_format' => ['recommended' => 'dynamic', 'type' => 'Equal', 'container' => 'db', 'testCli' => false],
 		'innodb_strict_mode' => ['container' => 'db', 'testCli' => false],
 		'innodb_file_format' => ['container' => 'db', 'testCli' => false],
 		'innodb_file_format_check' => ['container' => 'db', 'testCli' => false],
@@ -325,6 +325,7 @@ class ConfReport
 		'spaceRoot' => ['container' => 'env', 'type' => 'Space', 'testCli' => false, 'label' => 'SPACE_ROOT'],
 		'spaceStorage' => ['container' => 'env', 'type' => 'Space', 'testCli' => false, 'label' => 'SPACE_STORAGE'],
 		'spaceTemp' => ['container' => 'env', 'type' => 'Space', 'testCli' => false, 'label' => 'SPACE_TEMP'],
+		'spaceBackup' => ['container' => 'env', 'type' => 'Space', 'testCli' => false, 'label' => 'SPACE_BACKUP'],
 		'lastCronStart' => ['container' => 'env', 'testCli' => false, 'label' => 'LAST_CRON_START', 'isHtml' => true],
 		'crmProvider' => ['container' => 'env', 'testCli' => true, 'label' => 'CRM_PROVIDER'],
 		'open_basedir' => ['container' => 'php',  'type' => 'NotEmpty', 'testCli' => false, 'mode' => 'showWarnings'],
@@ -581,6 +582,7 @@ class ConfReport
 				'spaceRoot' => '',
 				'spaceStorage' => '',
 				'spaceTemp' => '',
+				'spaceBackup' => '',
 				'crmProvider' => \App\YetiForce\Register::getProvider(),
 				'lastCronStart' => $lastCronStartText,
 				'lastCronStartDateTime' => $lastCronStart,
@@ -628,7 +630,10 @@ class ConfReport
 		$request = [];
 		try {
 			foreach (static::$urlsToCheck as $type => $url) {
-				$res = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->request('GET', $requestUrl . $url, ['timeout' => 1, 'verify' => false]);
+				$urlAddress = $requestUrl . $url;
+				\App\Log::beginProfile("GET|ConfReport::getRequest|{$urlAddress}", __NAMESPACE__);
+				$res = (new \GuzzleHttp\Client(\App\RequestHttp::getOptions()))->request('GET', $urlAddress, ['timeout' => 1, 'verify' => false]);
+				\App\Log::endProfile("GET|ConfReport::getRequest|{$urlAddress}", __NAMESPACE__);
 				foreach ($res->getHeaders() as $key => $value) {
 					$request[strtolower($key)][$type] = \is_array($value) ? implode(',', $value) : $value;
 				}
@@ -1306,8 +1311,14 @@ class ConfReport
 			case 'spaceTemp':
 				$dir = static::$env['tempDir'];
 				break;
+			case 'spaceBackup':
+				$dir = \App\Utils\Backup::getBackupCatalogPath();
+				break;
 			default:
 				break;
+		}
+		if (empty($dir)) {
+			return $row;
 		}
 		$free = disk_free_space($dir);
 		$total = disk_total_space($dir);

@@ -1083,6 +1083,12 @@ return [
 			'validation' => '\App\Validator::text',
 			'sanitization' => '\App\Purifier::purify'
 		],
+		'askAdminAboutVisitPurpose' => [
+			'default' => true,
+			'description' => '@var bool Ask admin about visit purpose',
+			'validation' => '\App\Validator::bool',
+			'sanitization' => '\App\Purifier::bool'
+		],
 	],
 	'sounds' => [
 		'IS_ENABLED' => [

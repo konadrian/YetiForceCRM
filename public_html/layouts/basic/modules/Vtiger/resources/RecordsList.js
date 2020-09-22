@@ -84,7 +84,7 @@ $.Class(
 				.fail(function (textStatus, errorThrown) {
 					aDeferred.reject(textStatus, errorThrown);
 					progressIndicatorElement.progressIndicator({ mode: 'hide' });
-					Vtiger_Helper_Js.showPnotify({
+					app.showNotify({
 						text: app.vtranslate('JS_NOT_ALLOWED_VALUE'),
 						type: 'error'
 					});
@@ -228,22 +228,20 @@ $.Class(
 				if ($(e.target).hasClass('js-select-checkbox') || $(e.target).hasClass('u-cursor-auto')) {
 					return true;
 				}
-				let data = $(this).data();
+				let row = $(this);
+				let data = row.data();
 				if (self.container.find('.js-multi-select').val() === 'true') {
 					let selected = {};
 					if (additional) {
 						selected[data.id] = [];
-						$(this)
-							.closest('tr')
-							.find('td[data-field]')
-							.each(function (index, field) {
-								field = $(field);
-								selected[data.id].push({
-									value: field.text(),
-									field: field.data('field'),
-									type: field.data('type')
-								});
+						row.find('td[data-field]').each(function (index, field) {
+							field = $(field);
+							selected[data.id].push({
+								value: field.text(),
+								field: field.data('field'),
+								type: field.data('type')
 							});
+						});
 					} else {
 						selected[data.id] = data.name;
 					}
@@ -251,7 +249,6 @@ $.Class(
 				} else {
 					self.selectEvent(data, e);
 				}
-
 				app.hideModalWindow(false, self.container.parent().attr('id'));
 			});
 			self.container.on('click', '.js-selected-rows', function (e) {
@@ -282,7 +279,7 @@ $.Class(
 						}
 					});
 				if (Object.keys(selected).length <= 0) {
-					Vtiger_Helper_Js.showPnotify({
+					app.showNotify({
 						text: app.vtranslate('JS_PLEASE_SELECT_ONE_RECORD')
 					});
 				} else {
