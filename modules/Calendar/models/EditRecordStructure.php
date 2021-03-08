@@ -37,11 +37,8 @@ class Calendar_EditRecordStructure_Model extends Vtiger_EditRecordStructure_Mode
 							$fieldValue = $recordModel->get($fieldName);
 							if ('date_start' === $fieldName) {
 								$fieldValue = $fieldValue . ' ' . $recordModel->get('time_start');
-							} elseif ('due_date' == $fieldName && 'Calendar' != $moduleModel->get('name')) {
-								//Do not concat duedate and endtime for Tasks as it contains only duedate
-								if ('Calendar' != $moduleModel->getName()) {
-									$fieldValue = $fieldValue . ' ' . $recordModel->get('time_end');
-								}
+							} elseif ('due_date' === $fieldName) {
+								$fieldValue = $fieldValue . ' ' . $recordModel->get('time_end');
 							} elseif ('activitystatus' === $fieldName && empty($fieldValue)) {
 								$currentUserModel = Users_Record_Model::getCurrentUserModel();
 								$defaulteventstatus = $currentUserModel->get('defaulteventstatus');

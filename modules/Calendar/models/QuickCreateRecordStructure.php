@@ -1,27 +1,22 @@
 <?php
-/* +***********************************************************************************
- * The contents of this file are subject to the vtiger CRM Public License Version 1.0
- * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
- * The Initial Developer of the Original Code is vtiger.
- * Portions created by vtiger are Copyright (C) vtiger.
- * All Rights Reserved.
- * *********************************************************************************** */
+/**
+ * Calendar quick create record structure file.
+ *
+ * @package   Model
+ *
+ * @copyright YetiForce Sp. z o.o
+ * @license   YetiForce Public License 3.0 (licenses/LicenseEN.txt or yetiforce.com)
+ * @author    Adrian Koń <m.krzaczkowski@yetiforce.com>
+ */
 
 /**
- * QuickCreate Record Structure Model class.
+ * Calendar quick create record structure class.
  */
-class Vtiger_QuickCreateRecordStructure_Model extends Vtiger_RecordStructure_Model
+class Calendar_QuickCreateRecordStructure_Model extends Vtiger_QuickCreateRecordStructure_Model
 {
-	/**
-	 * Function to get the values in structured format.
-	 *
-	 * @return Vtiger_Field_Model[] Field instances.
-	 */
+	/** {@inheritdoc} */
 	public function getStructure()
 	{
-		echo 'abbb';
-		exit;
 		if (!empty($this->structuredValues)) {
 			return $this->structuredValues;
 		}
@@ -33,7 +28,11 @@ class Vtiger_QuickCreateRecordStructure_Model extends Vtiger_RecordStructure_Mod
 				continue;
 			}
 			$recordModelFieldValue = $this->record->get($fieldName);
-			if (!empty($recordModelFieldValue)) {
+			if ('date_start' === $fieldName) {
+				$fieldModel->set('fieldvalue', $recordModelFieldValue . ' ' . $this->record->get('time_start'));
+			} elseif ('due_date' === $fieldName) {
+				$fieldModel->set('fieldvalue', $recordModelFieldValue . ' ' . $this->record->get('time_end'));
+			} elseif (!empty($recordModelFieldValue)) {
 				$fieldModel->set('fieldvalue', $recordModelFieldValue);
 			} elseif ('activitystatus' === $fieldName) {
 				$currentUserModel = Users_Record_Model::getCurrentUserModel();
