@@ -20,8 +20,6 @@ class Vtiger_QuickCreateRecordStructure_Model extends Vtiger_RecordStructure_Mod
 	 */
 	public function getStructure()
 	{
-		echo 'abbb';
-		exit;
 		if (!empty($this->structuredValues)) {
 			return $this->structuredValues;
 		}
